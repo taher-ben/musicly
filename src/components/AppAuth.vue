@@ -41,15 +41,26 @@
                         </div>
                         <div class="mb-3">
                             <label class="inline-block mb-2">Password</label>
-                            <input type="password"
-                                class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
-                                placeholder="Password" />
+                            <!-- <VeeField type="password" :bails="false" v-slot="{ field, errors }">
+                                <input
+                                    class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
+                                    placeholder="Password" v-bind="field" />
+                                <div class="text-red-600" v-for="errors in errors" :key="errors">
+                                    {{ errors }}
+                                </div>
+                            </VeeField> -->
+                            <!-- <ErrorMessage class="text-red-600" name="password" /> -->
                         </div>
                         <button type="submit"
                             class="block w-full bg-purple-600 text-white py-1.5 px-3 rounded transition hover:bg-purple-700">Submit</button>
                     </VeeForm>
                     <!-- Registration Form -->
-                    <VeeForm v-show="tab === 'Register'" :validation-schema="schema" @submit="register">
+                    <div class="text-white text-center font-bold p-3 rounded mb-4" v-if="reg_show_alert"
+                        :class="reg_alert_variant">
+                        {{ reg_alert_msg }}
+                    </div>
+                    <VeeForm v-show="tab === 'Register'" :validation-schema="schema" @submit="register"
+                        :initial-values="userData">
                         <div class="mb-3">
                             <label class="inline-block mb-2">Name</label>
                             <VeeField type="text" name="name"
@@ -73,11 +84,15 @@
                         </div>
                         <div class="mb-3">
                             <label class="inline-block mb-2">Password</label>
-                            <VeeField type="password" name="password"
-                                class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
-                                placeholder="Password" />
+                            <VeeField type="password" name="password" :bails="false" v-slot="{ field, errors }">
+                                <input
+                                    class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
+                                    placeholder="Password" v-bind="field" />
+                                <div class="text-red-600" v-for="errors in errors" :key="errors">
+                                    {{ errors }}
+                                </div>
+                            </VeeField>
                             <ErrorMessage class="text-red-600" name="password" />
-
                         </div>
                         <div class="mb-3">
                             <label class="inline-block mb-2">Confirm Password</label>
@@ -103,7 +118,7 @@
                             <label class="inline-block">Accept terms of service</label>
                             <ErrorMessage class="text-red-600" name="tos" />
                         </div>
-                        <button type="submit"
+                        <button type="submit" :disabled="reg_in_submission"
                             class="block w-full bg-purple-600 text-white py-1.5 px-3 rounded transition hover:bg-purple-700">Submit</button>
                     </VeeForm>
                 </div>
@@ -133,12 +148,19 @@ export default {
             schema: {
                 name: "required|min:4|max:13|alpha_spaces",
                 email: "required|min:3|max:100|email",
-                age: "required|min_value:18|max_Value:100",
-                password: "required|min:3|max:100",
-                confirm_password: "confirmed:@password",
+                age: "required|min_value:18|max_value:100",
+                password: "required|min:9|max:100|excluded:password",
+                confirm_password: "passwords_mismatch:@password",
                 country: "required|excluded:Antarctica",
-                tos: "required"
-            }
+                tos: "tos"
+            },
+            userData: {
+                country: 'USA'
+            },
+            reg_in_submission: false,
+            reg_show_alert: false,
+            reg_alert_variant: "bg-blue-500",
+            reg_alert_msg: "Please wait! Your account is being created. "
         }
     }
 }

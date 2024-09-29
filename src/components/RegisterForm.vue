@@ -23,7 +23,6 @@
             <VeeField type="number" name="age"
                 class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded" />
             <ErrorMessage class="text-red-600" name="age" />
-
         </div>
         <div class="mb-3">
             <label class="inline-block mb-2">Password</label>
@@ -31,8 +30,8 @@
                 <input
                     class="block w-full py-1.5 px-3 text-gray-800 border border-gray-300 transition duration-500 focus:outline-none focus:border-black rounded"
                     placeholder="Password" v-bind="field" />
-                <div class="text-red-600" v-for="errors in errors" :key="errors">
-                    {{ errors }}
+                <div class="text-red-600" v-if="errors.length">
+                    <div v-for="error in errors" :key="error">{{ error }}</div>
                 </div>
             </VeeField>
             <ErrorMessage class="text-red-600" name="password" />
@@ -66,34 +65,74 @@
 </template>
 
 <script>
+import { auth, usersCollection } from '@/includes/firebase';
+import { mapWritableState } from 'pinia';
+import useUserStore from '@/stores/user';
+
 export default {
     data() {
         return {
+            reg_show_alert: false,
+            reg_in_submission: false,
+            reg_alert_variant: '',
+            reg_alert_msg: '',
             schema: {
                 name: "required|min:4|max:13|alpha_spaces",
                 email: "required|min:3|max:100|email",
                 age: "required|min_value:18|max_value:100",
                 password: "required|min:9|max:100|excluded:password",
-                confirm_password: "passwords_mismatch:@password",
+                confirm_password: "required|confirmed:@password",
                 country: "required|excluded:Antarctica",
-                tos: "tos"
+                tos: "required"
             },
             userData: {
                 country: 'USA'
             },
-        }
+        };
+    },
+    computed: {
+        ...mapWritableState(useUserStore, ['userLoggedIn']),
     },
     methods: {
-        register(values) {
+        async register(values) {
             this.reg_show_alert = true;
             this.reg_in_submission = true;
             this.reg_alert_variant = "bg-blue-500";
-            this.reg_alert_msg = "Please wait! Your account is being Created.";
+            let userCred = null;
+            try {
+                this.reg_alert_msg = "Please wait! Your account is being created.";
+                userCred = await auth.createUserWithEmailAndPassword(
+                    values.email, values.password,
+                );
+            } catch (errors) {
+                this.reg_in_submission = false;
+                this.reg_alert_variant = 'bg-red-500';
+                this.reg_alert_msg = 'An unexpected error occurred. Please try again later.';
+                console.error(errors);
+                return;
+            }
+            try {
+                await usersCollection.doc(userCred.user.uid).set({
+                    name: values.name,
+                    email: values.email,
+                    age: values.age,
+                    country: values.country
+                });
+            } catch (error) {
+                this.reg_in_submission = false;
+                this.reg_alert_variant = 'bg-red-500';
+                this.reg_alert_msg = 'An unexpected error occurred. Please try again later.';
+                console.error(error);
+                return;
+            }
 
-            this.reg_alert_variant = "bg-green-500"
-            this.reg_alert_msg = "success!account has been created"
+            const userStore = useUserStore();
+            userStore.userLoggedIn = true;
 
+            this.reg_alert_variant = "bg-green-500";
+            this.reg_alert_msg = "Success! Your account has been created.";
         },
     }
-}
+};
+
 </script>

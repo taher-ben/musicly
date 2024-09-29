@@ -50,7 +50,6 @@ export default {
           passwords_mismatch: "The passwords don't match.",
           tos: 'You must accept the terms of service.'
         }
-
         const message = messages[ctx.rule.name]
           ? messages[ctx.rule.name]
           : `The field ${ctx.field} is invalid`
